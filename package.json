@@ -1,0 +1,25 @@
+{
+  "name": "reddit-discovery-chain",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "yarn nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bracket-template": "^1.1.5",
+    "chalk": "^5.2.0",
+    "dotenv": "^16.0.3",
+    "eslint": "^8.34.0",
+    "koa": "^2.14.1",
+    "koa-bodyparser": "^4.3.0",
+    "koa-views": "^8.0.0",
+    "koa-webpack": "^6.0.0",
+    "koa2-validation": "^1.1.0",
+    "next-koa": "^2.2.0",
+    "nodemon": "^2.0.20"
+  }
+}
