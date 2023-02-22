@@ -137,10 +137,12 @@ function convert(name) {
 }
 
 const reportTypes = [
-    'preview', 'commentStats', 'wordCloud'
+    'preview', 'commentStats', 'wordCloud',
+    'commentLengthDistribution', 'lengthVsUpvote',
+    'subredditDistribution'
 ]
 
-const defaultType = reportTypes[2]
+const defaultType = reportTypes[5]
 
 
 const varMap = {
@@ -152,10 +154,100 @@ const varMap = {
 }
 
 const chartMap = {
-    [reportTypes[2]]: drawCloud
+    [reportTypes[2]]: drawCloud,
+    [reportTypes[3]]: drawLine,
+    [reportTypes[4]]: drawPoints,
+    [reportTypes[5]]: drawPie,
+
 }
 
 const timeSelector = document.querySelector('.time-selector')
+
+function drawPie(_data) {
+    makeCanvas()
+    const data = _data.sort((y, x) => {
+        return x.total - y.total
+    }).slice(1-1, 111)
+    const labels = data.map(t => t.subreddit)
+    const counts = data.map(t => t.total)
+
+    var xValues = ["Italy", 1, "Spain", "USA", "Argentina"];
+    var yValues = [55, 49, 44, 24, 15];
+    var barColors = [
+        "#b91d47",
+        "#00aba9",
+        "#2b5797",
+        "#e8c3b9",
+        "#1e7145"
+    ];
+
+    new Chart(ctx1, {
+        type: "pie",
+        data: {
+            labels: labels,
+            datasets: [{
+                backgroundColor: counts.map(randomColor),
+                data: counts
+            }]
+        },
+
+    });
+    return;
+
+    console.log(labels, counts)
+    new Chart(ctx1, {
+        type: 'pie',
+        labels: labels,
+        data: {
+            datasets: [{
+                data: counts,
+                backgroundColor: labels.map(randomColor)
+                // borderColor: randomColor(),
+                // backgroundColor: colors
+            }]
+        }
+    })
+}
+
+function drawPoints(data) {
+    makeCanvas()
+    const val = data.map(t => {
+        return {
+            x: t.c_length,
+            y: t.ups
+        }
+    })
+    new Chart(ctx1, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                data: val,
+                pointRadius: 4,
+                pointBackgroundColor: randomColor()
+                // borderColor: randomColor(),
+                // backgroundColor: colors
+            }]
+        }
+    })
+}
+
+function drawLine(data) {
+    makeCanvas()
+    const xValues = data.map(t => t.c_length)
+    const yValues = data.map(t => t.total)
+
+    new Chart(ctx1, {
+        type: 'line',
+        data: {
+            labels: xValues,
+            datasets: [{
+                data: yValues,
+                borderColor: randomColor(),
+                // backgroundColor: colors
+            }]
+        }
+    })
+}
 
 function showLoading() {
 
@@ -258,6 +350,8 @@ let currentType = null
 
 async function handleChoice(type) {
     currentType = type
+    document.querySelector('.graph-title').innerHTML = convert(type)
+
     showLoading()
     console.log(timeSelector.value)
     const vars = varMap[type] || {}
@@ -288,7 +382,6 @@ reportTypes.forEach(function (type) {
     e.onclick = function () {
         handleChoice(type)
     }
-    document.querySelector('.graph-title').innerHTML = convert(type)
     target.appendChild(e)
 })
 
@@ -313,7 +406,7 @@ fetch('/query/' + 'batchList', {
             timeSelector.appendChild(el)
         })
     })
-timeSelector.onchange = function (){
+timeSelector.onchange = function () {
     console.log(currentType)
     handleChoice(currentType)
 }

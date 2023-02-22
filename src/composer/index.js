@@ -215,7 +215,6 @@ if (fs.existsSync(PRC_DIR)) {
 }
 
 app.use(async (ctx, next) => {
-    console.log(procedurePath)
     if (procedurePath.includes(ctx.path) && ctx.method === 'POST') {
         try {
             const splitted = ctx.path.split('/')
@@ -301,7 +300,9 @@ async function jsHandler(text, lastResult) {
 async function sqlHandler(sqlText) {
     if (sqlText.toLowerCase().includes('select') &&
         !sqlText.toLowerCase().includes('limit') &&
-        !sqlText.toLowerCase().includes('average_comment_length')
+        !sqlText.toLowerCase().includes('group by') &&
+        !sqlText.toLowerCase().includes('c_length') &&
+        !sqlText.toLowerCase().includes('count')
     ) {
         sqlText = sqlText.replace(/[;\s]+$/g, '') + ' LIMIT 10'
     }

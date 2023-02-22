@@ -6,6 +6,7 @@
   "scripts": {
     "start": "yarn nodemon src/composer/index.js --ignore data/",
     "start1": "node src/composer/index.js --ignore data/",
+    "rev": "ngrok http 3000",
     "prepare": "git pull",
     "test": "echo \"Error: no test specified\" && exit 1",
     "sql": "node src/command.js"
