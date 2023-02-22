@@ -5,8 +5,10 @@
   "main": "src/composer/index.js",
   "scripts": {
     "start": "yarn nodemon src/composer/index.js --ignore data/",
+    "start1": "node src/composer/index.js --ignore data/",
     "prepare": "git pull",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "sql": "node src/command.js"
   },
   "author": "",
   "license": "ISC",

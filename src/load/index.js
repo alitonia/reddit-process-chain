@@ -14,7 +14,8 @@ async function load({db, startDir}) {
             {encoding: 'utf-8'}
         )
     )
-    let stmt = db.prepare(`INSERT INTO comments VALUES (${Array(13).fill('?').join(',')})`);
+    let stmt = db.prepare(`INSERT INTO comments
+                           VALUES (${Array(13).fill('?').join(',')})`);
     commentObj.forEach(comment => {
         stmt.run(
             comment.id,
@@ -44,14 +45,9 @@ async function load({db, startDir}) {
     db.exec('select count(*) from comments', (err, val) => console.log('c', err, val))
 
     entityObj.forEach(entity => {
-        db.get(`select * from comment_entity where id = "${entity.id}" limit 1`, (error, val) => {
-            if (val) {
-                db.exec(`update comment_entity set count = count + ${entity.count} where id = "${entity.id}"`)
-            } else {
-                const stt = `insert into comment_entity values("${entity.id}", ${entity.count})`
-                db.exec(stt, (error) => error && console.log(error, stt))
-            }
-        })
+        const stt = `insert into comment_entity
+                     values ("${entity.id}", ${entity.count}, "${id}")`
+        db.exec(stt, (error) => error && console.log(error, stt))
     })
     db.exec('select count(*) from comment_entity', (err, val) => console.log('ce', err, val))
     console.log('done')

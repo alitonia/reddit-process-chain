@@ -7,6 +7,7 @@ const {
 const path = require("path");
 const url = require("url");
 const {exec} = require("child_process");
+const fs = require("fs");
 
 let START_DATA_PATH = './data'
 const TOPIC_PATH = './topic'
@@ -43,6 +44,8 @@ async function prepare({startDir}) {
 }
 
 async function crawling({startDir} = {}) {
+    const lastDirName = fs.readdirSync('./data/rawData').sort()[1 - 1]
+
     let DATA_PATH = startDir ? path.join(START_DATA_PATH, startDir) : START_DATA_PATH
     await prepare({startDir})
 
@@ -54,9 +57,32 @@ async function crawling({startDir} = {}) {
     let imageBatchWriteData = {}
     let imagePagination = 1
 
+
     for (const topic of topics) {
         let lastId = null
         let hasMore = true
+        console.log(topic)
+        // const lastRawDataPath = path.join(
+        //     './data/rawData',
+        //     lastDirName,
+        //     'topic/',
+        //     topic,
+        //     'listing',
+        //     '000.json'
+        // )
+        // console.log(lastRawDataPath)
+        // if (!fs.existsSync(lastRawDataPath)) {
+        //     console.log('nothing')
+        //     continue
+        // }
+        // let s = JSON.parse(fs.readFileSync(lastRawDataPath, {encoding: 'utf-8'}))
+        // const child = s.data.children[s.data.children.length - 1]
+        // if (!child){
+        //     continue
+        // }
+        // const lastLastId = child.data.name
+        // console.log(lastRawDataPath, lastLastId)
+
         for (let i = 0; i < PAGINATION_LIMIT; i++) {
             if ((i > 0 && !lastId) || !hasMore) {
                 if (!hasMore) {
@@ -68,6 +94,7 @@ async function crawling({startDir} = {}) {
             }
 
             console.log(`Topic: ${topic}, Pagination: ${i}`)
+            // let listingURL = `https://www.reddit.com/r/${topic}/.json?limit=${topicLimit}&after=${lastLastId}`
             let listingURL = `https://www.reddit.com/r/${topic}/.json?limit=${topicLimit}`
             if (lastId) {
                 const urlObj = new URL(listingURL)
@@ -199,6 +226,7 @@ async function crawling({startDir} = {}) {
             }
         }
     }
+
     if (Object.keys(imageBatchWriteData).length) {
         console.log('batch image writing', imagePagination)
         saveJSONData(

@@ -1,1 +1,1 @@
-Select * from {{ table }} limit {{ limit }}
+Select * from {{ table }}  {{ filter }}  limit {{ limit }}

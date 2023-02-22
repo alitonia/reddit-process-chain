@@ -77,20 +77,31 @@ function stemming(text) {
 
 let i = 0
 
+function escapeRegexp(s) {
+    return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+}
+
+function trimSpecific(value, find) {
+    const find2 = escapeRegexp(find);
+    return value.replace(new RegExp(`^[${find2}]*(.*?)[${find2}]*$`), '$1')
+}
+
+function niceTrim(text) {
+    return trimSpecific(text, '?.,"\'! ')
+}
+
 function extractEntity(text) {
     let doc = nlp(text)
     let list = doc.topics().normalize().json()
     list.forEach(entry => {
-        const entryName = normalizeName(entry.text)
+        const entryName = normalizeName(niceTrim(entry.text))
         if (!entities[entryName]) {
             entities[entryName] = 1
         } else {
             entities[entryName] += 1
         }
-        if (i < 100) {
-            console.log(entryName)
-            i++
-        }
+        console.log(i, entryName)
+        i++
     })
     return text
 }
@@ -116,6 +127,7 @@ async function preprocess({startDir}) {
     let comments = []
     const commentId = {}
     const allFilePath = []
+    console.log(id)
     if (fs.existsSync(path.join(START_DATA_PATH, 'rawData', id))) {
         if (fs.existsSync(path.join(
             START_DATA_PATH, 'rawData', id, 'topic'
@@ -125,13 +137,15 @@ async function preprocess({startDir}) {
             )).map(x => path.join(START_DATA_PATH, 'rawData', id, 'topic', x, 'comment'));
 
             commentFolders.forEach(commentFolder => {
-                const filePaths = fs.readdirSync(path.join(
-                    commentFolder
-                )).map(x => path.join(commentFolder, x))
+                if (fs.existsSync(commentFolder)) {
+                    const filePaths = fs.readdirSync(path.join(
+                        commentFolder
+                    )).map(x => path.join(commentFolder, x))
 
-                filePaths.forEach(filePath => {
-                    allFilePath.push([filePath, 0])
-                })
+                    filePaths.forEach(filePath => {
+                        allFilePath.push([filePath, 0])
+                    })
+                }
             })
         }
 

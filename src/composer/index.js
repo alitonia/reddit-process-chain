@@ -73,6 +73,7 @@ app.use(async (ctx, next) => {
     }
 });
 
+let i = 1
 
 app.use(async (ctx, next) => {
     if (ctx.path === '/crawl') {
@@ -116,7 +117,9 @@ app.use(async (ctx, next) => {
             dataDirectory: 'processed',
             action: preprocess,
             afterSuccess: () => {
-                db.run(`update raw set status = 1 where id = "${targetId}"`)
+                db.run(`update raw
+                        set status = 1
+                        where id = "${targetId}"`)
             }
         })
     } else {
@@ -147,7 +150,9 @@ app.use(async (ctx, next) => {
             dataDirectory: 'load',
             action: loadDataToDatabase,
             afterSuccess: () => {
-                db.run(`update preprocess set status = 1 where id = "${targetId}"`)
+                db.run(`update preprocess
+                        set status = 1
+                        where id = "${targetId}"`)
             }
         })
     } else {
@@ -178,7 +183,9 @@ app.use(async (ctx, next) => {
             dataDirectory: 'predict',
             action: predict,
             afterSuccess: () => {
-                db.run(`update load set status = 1 where id = "${targetId}"`)
+                db.run(`update load
+                        set status = 1
+                        where id = "${targetId}"`)
             }
         })
     } else {
@@ -208,6 +215,7 @@ if (fs.existsSync(PRC_DIR)) {
 }
 
 app.use(async (ctx, next) => {
+    console.log(procedurePath)
     if (procedurePath.includes(ctx.path) && ctx.method === 'POST') {
         try {
             const splitted = ctx.path.split('/')
@@ -244,8 +252,8 @@ app.use(async (ctx, next) => {
 
 function replaceVar(text, vars) {
     return Object.entries(vars).reduce((str, [varName, val]) => {
-        return str.replaceAll(new RegExp(`{{ *${varName} *}}`, 'g'), val)
-    }, text).replaceAll(new RegExp(`{{ *[\\w_]+ *}}`, 'g'), '')
+        return str.replace(new RegExp(`{{ *${varName} *}}`, 'g'), val)
+    }, text).replace(new RegExp(`{{ *[\\w_]+ *}}`, 'g'), '')
 }
 
 //
@@ -291,13 +299,19 @@ async function jsHandler(text, lastResult) {
 }
 
 async function sqlHandler(sqlText) {
-    if (sqlText.toLowerCase().includes('select') && !sqlText.toLowerCase().includes('limit')) {
+    if (sqlText.toLowerCase().includes('select') &&
+        !sqlText.toLowerCase().includes('limit') &&
+        !sqlText.toLowerCase().includes('average_comment_length')
+    ) {
         sqlText = sqlText.replace(/[;\s]+$/g, '') + ' LIMIT 10'
     }
     console.log(sqlText)
     return new Promise(resolve => {
         db.all(sqlText, (error, val) => {
             console.log(val)
+            if (error) {
+                console.log(error)
+            }
             resolve(val)
         })
     })
@@ -324,9 +338,55 @@ function prepare() {
     db.exec("CREATE TABLE If not exists preprocess (id TEXT, status INT)");
     db.exec("CREATE TABLE If not exists load (id TEXT, status INT)");
     db.exec("CREATE TABLE If not exists predict (id TEXT, status INT)");
-    db.exec(`CREATE TABLE If not exists comments (id TEXT, body TEXT, subreddit TEXT, author TEXT, created_utc TEXT, parent_id TEXT, subreddit_type TEXT, controversiality INT, depth INT, ups INT, downs INT, total_awards_received INT, batch TEXT)`)
-    db.exec(`CREATE TABLE If not exists comment_entity (id TEXT, count INT)`)
-    db.exec(`CREATE TABLE If not exists predict_val (id TEXT PRIMARY KEY, nb TEXT, lr TEXT)`)
+    db.exec(`CREATE TABLE If not exists comments
+             (
+                 id
+                 TEXT,
+                 body
+                 TEXT,
+                 subreddit
+                 TEXT,
+                 author
+                 TEXT,
+                 created_utc
+                 TEXT,
+                 parent_id
+                 TEXT,
+                 subreddit_type
+                 TEXT,
+                 controversiality
+                 INT,
+                 depth
+                 INT,
+                 ups
+                 INT,
+                 downs
+                 INT,
+                 total_awards_received
+                 INT,
+                 batch
+                 TEXT
+             )`)
+    db.exec(`CREATE TABLE If not exists comment_entity
+             (
+                 id
+                 TEXT,
+                 count
+                 INT,
+                 batch
+                 TEXT
+             )`)
+    db.exec(`CREATE TABLE If not exists predict_val
+             (
+                 id
+                 TEXT
+                 PRIMARY
+                 KEY,
+                 nb
+                 TEXT,
+                 lr
+                 TEXT
+             )`)
 
     // db.exec('insert into raw values("St", 1)')
     // db.exec('insert into raw values("t_1676135201301", 0)')
@@ -391,7 +451,8 @@ async function saveAbleProgress(
         }
         const distinctName = idNameFunc()
 
-        const stmt = db.prepare(`INSERT INTO ${sqlTableName} VALUES (?, ?)`);
+        const stmt = db.prepare(`INSERT INTO ${sqlTableName}
+                                 VALUES (?, ?)`);
         stmt.run(distinctName, 0);
         stmt.finalize();
 
@@ -399,6 +460,7 @@ async function saveAbleProgress(
             startDir: path.join(dataDirectory, distinctName),
             db
         }).then(() => {
+            console.log('done')
             globalStats[statNamespace] = false
             if (afterSuccess) {
                 afterSuccess()
